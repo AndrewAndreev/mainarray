@@ -20,7 +20,8 @@ __declspec(allocate(".exre")) int main[] =
 };
 ```
 
-#Introduction
+# Introduction
+
 So, my research started with this [article](https://jroweboy.github.io/c/asm/2015/01/26/when-is-main-not-a-function.html) which inspired me to find if there was a way to implement it on Windows.
 
 In that article output has been implemented by _syscalls_, but in Windows it simply doesn't work this way. The only way left is to use NT kernel calls. Without going deep into details of this mechanism we can use the _printf_ function.
@@ -29,10 +30,10 @@ Feeling courageous and armed with Visual Studio I started to try. I don't know w
 
 The basic list of problems I had faced:
 
-1. Array located is in data section and can not be executed
+1. Array is located in data section and can not be executed
 2. There is no syscall available in Windows for output and printf should be used instead
 
-Let me explain why a function call is bad in this implementation. In a nutshell, compiler inserts the call address from the symbol table. But we have an array which is completely defined by us. So we should somehow work around this and make the compiler to put the address of _printf_ in our array.
+Let me explain why a function call is bad in this implementation. In a nutshell, compiler inserts the call address from the symbol table. But we have an array which is completely defined by us. So we should somehow to workaround this and make the compiler to put the address of _printf_ in our array.
 
 # Solving «execution data»
 
@@ -47,7 +48,7 @@ __declspec(allocate(".exre")) char main[] = { 0xC3 };
 
 Finally, when I could execute the array I had to write the code to execute.
 
-I decided to store the «Hello, World» message in assembly code. Here I should mention that I am bad at assembly language and my solution may be not a proper one in some way. [Stackoverfow answer](http://stackoverflow.com/a/4025307/4109062) helped me in understanding what assembly code I need to put into an array and not to make redundant function calls.
+I decided to store the «Hello, World» message in assembly code. Here I should mention that I am bad at assembly language and my solution may be not a proper one in some way. [Stackoverfow answer](http://stackoverflow.com/a/4025307/4109062) helped me in understanding what assembly code I needed to put into an array and not to make redundant function calls.
 I took Notepad++ and with the help of the function _plugins->converter->«ASCII -> HEX»_ got ASCII codes of symbols.
 
 <pre>Hello, World!</pre>
@@ -71,7 +72,7 @@ Reversing in little-endian and reordering the numbers
 
 ---
 
-I skipped a moment when I was trying to call _printf_ directly. So all that I was able to do is to save a pointer to the function _printf_. We are going to see why soon.
+I skipped a moment when I was trying to call _printf_ directly. So all that I was able to do is to save a pointer to the function _printf_. Soon we are going to see why.
 
 ```asm
 #include <stdio.h>
@@ -158,6 +159,7 @@ So, we have a sequence of assembly code bytes between which we should leave an e
 <summary>By simple substitutions we obtain the desired sequence.</summary><p>
 We take previously obtained sequence of assembly code bytes.
 Given the fact that 4 bytes after `FF 15` should be a one value we format the rest of values to it. We complete the missing bytes with the nop operator with opcode 0x90.
+    
 ```asm
 90 68 6C 64
 21 00 68 20
